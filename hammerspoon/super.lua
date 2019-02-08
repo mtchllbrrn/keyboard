@@ -2,7 +2,7 @@ local eventtap = hs.eventtap
 local eventTypes = hs.eventtap.event.types
 local message = require('keyboard.status-message')
 
--- If 's' and 'd' are *both* pressed within this time period, consider this to
+-- If 'x' and 'c' are *both* pressed within this time period, consider this to
 -- mean that they've been pressed simultaneously, and therefore we should enter
 -- Super Duper Mode.
 local MAX_TIME_BETWEEN_SIMULTANEOUS_KEY_PRESSES = 0.04 -- 40 milliseconds
@@ -26,52 +26,55 @@ local superDuperMode = {
 superDuperMode:reset()
 
 superDuperModeActivationListener = eventtap.new({ eventTypes.keyDown }, function(event)
-  -- If 's' or 'd' is pressed in conjuction with any modifier keys
-  -- (e.g., command+s), then we're not activating Super Duper Mode.
+  -- NOTE: Most Super-Duper configs use S+D to enter SD mode.  I prefer
+  -- to move the binding down to X+C (on a qwerty keyboard) to decrease
+  -- the rate of false-positives when typing words like 'sounds' at speed.
+  -- If 'x' or 'c' is pressed in conjuction with any modifier keys
+  -- (e.g., command+c), then we're not activating Super Duper Mode.
   if not (next(event:getFlags()) == nil) then
     return false
   end
 
   local characters = event:getCharacters()
 
-  if characters == 's' then
+  if characters == 'x' then
     if superDuperMode.ignoreNextS then
       superDuperMode.ignoreNextS = false
       return false
     end
-    -- Temporarily suppress this 's' keystroke. At this point, we're not sure if
-    -- the user intends to type an 's', or if the user is attempting to activate
-    -- Super Duper Mode. If 'd' is pressed by the time the following function
+    -- Temporarily suppress this 'x' keystroke. At this point, we're not sure if
+    -- the user intends to type an 'x', or if the user is attempting to activate
+    -- Super Duper Mode. If 'c' is pressed by the time the following function
     -- executes, then activate Super Duper Mode. Otherwise, trigger an ordinary
-    -- 's' keystroke.
+    -- 'x' keystroke.
     superDuperMode.isSDown = true
     hs.timer.doAfter(MAX_TIME_BETWEEN_SIMULTANEOUS_KEY_PRESSES, function()
       if superDuperMode.isDDown then
         superDuperMode:enter()
       else
         superDuperMode.ignoreNextS = true
-        keyUpDown({}, 's')
+        keyUpDown({}, 'x')
         return false
       end
     end)
     return true
-  elseif characters == 'd' then
+  elseif characters == 'c' then
     if superDuperMode.ignoreNextD then
       superDuperMode.ignoreNextD = false
       return false
     end
-    -- Temporarily suppress this 'd' keystroke. At this point, we're not sure if
-    -- the user intends to type a 'd', or if the user is attempting to activate
-    -- Super Duper Mode. If 's' is pressed by the time the following function
+    -- Temporarily suppress this 'c' keystroke. At this point, we're not sure if
+    -- the user intends to type a 'c', or if the user is attempting to activate
+    -- Super Duper Mode. If 'x' is pressed by the time the following function
     -- executes, then activate Super Duper Mode. Otherwise, trigger an ordinary
-    -- 'd' keystroke.
+    -- 'c' keystroke.
     superDuperMode.isDDown = true
     hs.timer.doAfter(MAX_TIME_BETWEEN_SIMULTANEOUS_KEY_PRESSES, function()
       if superDuperMode.isSDown then
         superDuperMode:enter()
       else
         superDuperMode.ignoreNextD = true
-        keyUpDown({}, 'd')
+        keyUpDown({}, 'c')
         return false
       end
     end)
@@ -81,7 +84,7 @@ end):start()
 
 superDuperModeDeactivationListener = eventtap.new({ eventTypes.keyUp }, function(event)
   local characters = event:getCharacters()
-  if characters == 's' or characters == 'd' then
+  if characters == 'x' or characters == 'c' then
     superDuperMode:reset()
   end
 end):start()
@@ -95,8 +98,8 @@ superDuperModeModifierKeyListener = eventtap.new({ eventTypes.keyDown, eventType
   end
 
   local charactersToModifers = {}
-  charactersToModifers['a'] = 'alt'
-  charactersToModifers['f'] = 'cmd'
+  charactersToModifers['z'] = 'alt'
+  charactersToModifers['v'] = 'cmd'
   charactersToModifers[' '] = 'shift'
 
   local modifier = charactersToModifers[event:getCharacters()]
